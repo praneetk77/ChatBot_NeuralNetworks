@@ -1,0 +1,2 @@
+model_checkpoint_path: "C:\\Users\\prane\\PycharmProjects\\DL_ChatBot\\model.tflearn"
+all_model_checkpoint_paths: "C:\\Users\\prane\\PycharmProjects\\DL_ChatBot\\model.tflearn"
