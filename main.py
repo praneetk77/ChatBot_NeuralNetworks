@@ -1,10 +1,13 @@
 import random
 
 import nltk
+from keras.models import load_model
+
 nltk.download('punkt')
 from nltk.stem.lancaster import LancasterStemmer
 stemmer = LancasterStemmer()
 import pickle
+from tensorflow import keras
 
 import json
 import tflearn
@@ -70,21 +73,30 @@ except:
         pickle.dump((words, labels, training, output), f)
 
 
+#updated model using keras
+model = keras.models.Sequential()
+model.add(keras.layers.Dense(128, input_shape=(len(training[0]),), activation="relu"))
+model.add(keras.layers.Dropout(0.5))
+model.add(keras.layers.Dense(64, activation="relu"))
+model.add(keras.layers.Dropout(0.5))
+model.add(keras.layers.Dense(len(output[0]), activation="softmax"))
+sgd = keras.optimizers.SGD(learning_rate=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 
-net = tflearn.input_data(shape=[None,len(training[0])])
-net = tflearn.fully_connected(net,8)
-net = tflearn.fully_connected(net,8)
-net = tflearn.fully_connected(net,len(output[0]), activation="softmax")
-net = tflearn.regression(net)
-
-model = tflearn.DNN(net)
+# net = tflearn.input_data(shape=[None,len(training[0])])
+# net = tflearn.fully_connected(net,8)
+# net = tflearn.fully_connected(net,8)
+# net = tflearn.fully_connected(net,len(output[0]), activation="softmax")
+# net = tflearn.regression(net)
+#
+# model = tflearn.DNN(net)
 
 try:
-    model.load("model.tflearn")
-    print("herwerwerwer")
+    model = load_model("chatBot.model")
+    print("Previously saved model loaded.")
 except:
-    model.fit(training, output,n_epoch=1000, batch_size=8, show_metric=True)
-    model.save("model.tflearn")
+    model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
+    model.fit(training, output, epochs=200, batch_size=5, verbose=1)
+    model.save('chatBot.model')
 
 
 def bag_of_words(s, words):
@@ -104,8 +116,8 @@ def chat():
     while(True):
         inp = input("You : ")
         if(inp.lower()=="quit"): break
-
-        result = model.predict([bag_of_words(inp,words)])[0]
+        result = model.predict([[bag_of_words(inp,words)]])[0]
+        print(result[np.argmax(result)])
         if(result[np.argmax(result)]>0.7):
             tag = labels[np.argmax(result)]
             for tg in data["intents"]:
